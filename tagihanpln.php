@@ -2,7 +2,7 @@
 
 /* Just for Fun by iBacor */
 
-function tagihanpln($idp, $thn, $bln){
+function tagihanpln($idp, $thn='', $bln=''){
 
 	// array untuk output
 	$result = array();
