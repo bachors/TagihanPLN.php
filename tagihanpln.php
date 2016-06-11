@@ -26,45 +26,83 @@ function tagihanpln($idp, $thn='', $bln=''){
 			'X-GWT-Module-Base: http://layanan.pln.co.id/ebill/FormInfoRekening/'
 		));
 		curl_setopt($ch, CURLOPT_POSTFIELDS, '7|0|7|http://layanan.pln.co.id/ebill/FormInfoRekening/|31FCED6DBB5E158989E9AD8E99085D6D|com.iconplus.client.services.TransService|getInvoiceByIdpelThblrek|java.lang.String/2004016611|'.$idp.'|'.$thn.$bln.'|1|2|3|4|2|5|5|6|7|');   
-		$data = curl_exec($ch);
-		curl_close($ch);
-		
-		// manipulasi dom
-		if(preg_match('/ketlunas","fakmkvam/', $data)){
-			$data = str_replace(array('//OK', '"', '],0,7]', 'rp', 'frt,', 'ketlunas,'), '', $data);
-		}else{
-			$data = str_replace(array('//OK', '"', '],0,7]', 'rp', 'frt,'), '', $data);
-		}
-		$data = str_replace('tag', 'tagihan', $data);
-		$data = str_replace(array('   ', '  '), ' ', $data);
-		$data = preg_replace("/\[[^>]+\[/i", "", $data);
-		
-		// create array
-		$array = explode(',', $data);
-		
-		// data ada
-		if(count($array) > 5){
+		if(!$data = curl_exec($ch)){
 			
-			// array to object
-			$object = new stdClass();
-			foreach ($array as $key => $value)
-			{
-				if($key > 2 && $key % 2 != 0){
-					$object->$value = $array[$key + 1];
-				}
-			}
-			$result['status'] = 'success';
-			$result['query'] = array(
-				'id_pelanggan' => $idp,
-				'tahun' => $thn,
-				'bulan' => $bln
-			);
-			$result['data'] = $object;
-		}else{
-		
-			// data tidak ada
+			// website yang di cURL sedang offline
 			$result['status'] = 'error';
-			$result['pesan'] = 'data tidak ada';
+			$result['pesan'] = 'offline';
+		}else{
+			curl_close($ch);
+			
+			// manipulasi dom
+			$data = str_replace(array('//OK', '"', '],0,7]', 'rp'), '', $data);
+			$data = str_replace('tag', 'tagihan', $data);
+			$data = str_replace(array('   ', '  '), ' ', $data);
+			$data = preg_replace("/\[[^>]+\[/i", "", $data);
+			
+			// create array
+			$array = explode(',', $data);
+			
+			// data ada
+			if(count($array) > 5){
+				
+				// daftar nama key yang value.y harus integer
+				$integer = array(
+					'thblrek',
+					'lwbp',
+					'beban',
+					'bpju',
+					'ptl',
+					'idpel',
+					'sahlwbp',
+					'daya',
+					'slalwbp',
+					'pemkwh',
+					'tglbacaakhir',
+					'tglbacalalu',
+					'tagihan'
+				);
+				
+				// daftar nama key yang value.y harus string
+				$string = array(
+					'diskon',
+					'angsuran',
+					'fakmkvam',
+					'slawbp',
+					'nama',
+					'namaupi',
+					'fjn',
+					'jamnyala',
+					'namathblrek',
+					'terbilang',
+					'wbp',
+					'alamat',
+					'tarif'
+				);
+				
+				// array to object
+				$object = new stdClass();
+				foreach ($array as $key => $value)
+				{
+					if(in_array($value, $integer)){
+						$object->$value = (intval($array[$key + 1]) ? $array[$key + 1] : '');
+					}else if(in_array($value, $string)){
+						$object->$value = (intval($array[$key + 1]) ? '' : $array[$key + 1]);
+					}
+				}
+				$result['status'] = 'success';
+				$result['query'] = array(
+					'id_pelanggan' => $idp,
+					'tahun' => $thn,
+					'bulan' => $bln
+				);
+				$result['data'] = $object;
+			}else{
+			
+				// data tidak ada
+				$result['status'] = 'error';
+				$result['pesan'] = 'data tidak ada';
+			}
 		}
 	}else{
 		
