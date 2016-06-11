@@ -60,6 +60,7 @@ function tagihanpln($idp, $thn='', $bln=''){
 					'pemkwh',
 					'tglbacaakhir',
 					'tglbacalalu',
+					'ketlunas',
 					'tagihan'
 				);
 				
